@@ -1,0 +1,49 @@
+--- 
+- 
+  become: true
+  become_method: sudo
+  gather_facts: true
+  hosts: all
+  tags: 
+    - jenkins
+  tasks: 
+    - 
+      name: "*"
+      state: present
+      update_cache: true
+      yum: ~
+    - 
+      name: "{{ item }}"
+      package: ~
+      state: latest
+      with_items: 
+        - java-1.8.0-openjdk
+        - git
+        - texlive-latex
+        - wget
+    - 
+      command: "sudo wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat/jenkins.repo"
+      name: "Download jenkins repo"
+    - 
+      key: "http://pkg.jenkins-ci.org/redhat/jenkins-ci.org.key"
+      name: "Import Jenkins CI key"
+      rpm_key: ~
+      state: present
+    - 
+      name: "{{ item }}"
+      package: ~
+      state: latest
+      with_items: 
+        - jenkins
+    - 
+      name: "Allow port 8080"
+      shell: "iptables -I INPUT -p tcp --dport 8080 -m state --state NEW,ESTABLISHED -j ACCEPT"
+    - 
+      name: jenkins
+      service: ~
+      state: started
+    - 
+      port: 8080
+      wait_for: ~
+  user: ansible
+
